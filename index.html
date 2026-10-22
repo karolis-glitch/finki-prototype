@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Finki Clickable Prototype</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap">
+<style>
+/* Layout: auth/onboarding = centred column under a slim header; app = left nav + content, nav becomes a top strip on phones */
+:root{
+  color-scheme: dark;
+  --bg:#121212; --nav:#171716; --surface:#1B1B1A; --surface-2:#232321;
+  --line:#2F2E2B; --line-2:#3A3935; --row:#262624;
+  --fg:#F2F0EB; --fg-2:#CFCBC3; --muted:#A8A49C;
+  --gold:#D6B36F; --gold-hi:#E8CB8F; --on-gold:#1A1408; --band:#3B3626;
+  --good:#8BD3A8; --warn:#F0A55A;
+  --display:'Playfair Display', Georgia, 'Times New Roman', serif;
+  --body:Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+html,body{background:var(--bg);color:var(--fg)}
+body{margin:0;font-family:var(--body);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:var(--gold)} a:hover{color:var(--gold-hi)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+h1,h2{font-family:var(--display);font-weight:500;margin:0;text-wrap:balance;line-height:1.12}
+p{margin:0}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.eyebrow.gold{color:var(--gold)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;padding:13px 20px;font-size:15px;font-weight:600;text-decoration:none;border:1px solid transparent;transition:background .15s,border-color .15s}
+.btn-primary{background:var(--gold);color:var(--on-gold)} .btn-primary:hover{background:var(--gold-hi);color:var(--on-gold)}
+.btn-ghost{background:transparent;border-color:var(--line-2);color:var(--fg);font-weight:500} .btn-ghost:hover{border-color:var(--muted);color:var(--fg)}
+.btn-link{background:none;border:0;color:var(--gold);padding:13px 6px;font-weight:500}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.card.focus{border:2px solid var(--gold)}
+.pad{padding:20px}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.grow{flex:1 1 auto}
+.stack{display:flex;flex-direction:column}
+.g6{gap:6px}.g10{gap:10px}.g14{gap:14px}.g18{gap:18px}.g22{gap:22px}.g28{gap:28px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+.tile .k{font-size:12px;color:var(--muted)} .tile .v{font-size:24px;font-weight:700}
+.seg{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:4px}
+.seg button{border:0;background:transparent;color:var(--fg-2);border-radius:7px;padding:10px 16px;font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--gold);color:var(--on-gold);font-weight:600}
+.chip{font-size:12px;border:1px solid var(--line-2);border-radius:99px;padding:3px 10px}
+.tablebox{overflow-x:auto}
+.table{min-width:520px}
+.tr{display:grid;gap:12px;padding:14px 20px;border-bottom:1px solid var(--row);align-items:center}
+.tr.head{font-size:12px;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--line);padding-block:12px}
+.fineprint{font-size:12px;color:var(--muted)}
+
+/* Header used by sign-in-less flows */
+.topbar{display:flex;flex-wrap:wrap;align-items:center;gap:20px;padding-block:20px;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px));border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:20px;font-weight:600;color:var(--fg);text-decoration:none;background:none;border:0;padding:0}
+.progress{flex:1 1 240px;max-width:420px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.progress .bars{flex:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.progress .bars span{height:4px;border-radius:99px;background:var(--line)}
+.progress .bars span.on{background:var(--gold)}
+.col{width:100%;max-width:880px;margin:0 auto;padding-block:48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.col.wide{max-width:1120px}
+.h-xl{font-size:clamp(32px,4.6vw,46px)}
+.h-l{font-size:clamp(28px,3.6vw,36px)}
+.lede{font-size:17px;color:var(--muted);max-width:62ch}
+
+/* Sign in */
+.auth{display:flex;flex-wrap:wrap;min-height:100vh}
+.auth-pitch{flex:1 1 480px;min-width:0;background:#191917;border-right:1px solid var(--line);padding-block:48px;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:48px;display:flex;flex-direction:column;gap:36px}
+.auth-form{flex:1 1 400px;min-width:0;display:flex;align-items:center;justify-content:center;padding-block:48px;padding-left:24px;padding-right:max(24px,env(safe-area-inset-right,0px))}
+.field{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500}
+.field input{font:inherit;font-size:15px;color:var(--fg);background:var(--surface);border:1px solid var(--line-2);border-radius:10px;padding:13px 14px}
+.or{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--muted)} .or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* Choice cards */
+.choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.choice{text-align:left;background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:8px;color:var(--fg)}
+.choice:hover{border-color:var(--line-2)}
+.choice.picked,.choice.best{border-color:var(--gold)}
+.choice .t{font-size:18px;font-weight:600}
+.choice .d{font-size:14px;color:var(--muted);line-height:1.5}
+.choice .big{font-family:var(--display);font-size:40px;font-weight:500}
+.badge{align-self:flex-start;font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--on-gold);background:var(--gold);border-radius:99px;padding:3px 9px}
+
+/* Drift bars */
+.drift{display:grid;grid-template-columns:110px minmax(0,1fr) 120px;gap:14px;align-items:center}
+.track{position:relative;height:20px;border-radius:6px;background:var(--surface-2)}
+.track .band{position:absolute;top:0;bottom:0;background:var(--band);border-radius:4px}
+.track .mark{position:absolute;top:-3px;width:4px;height:26px;border-radius:2px;background:var(--fg)}
+.track .mark.off{background:var(--warn)}
+.status{font-size:13px;text-align:right;color:var(--muted)} .status.off{color:var(--warn);font-weight:600}
+
+/* App shell */
+.app{display:flex;min-height:100vh}
+.nav{flex:0 0 220px;background:var(--nav);border-right:1px solid var(--line);padding:22px 14px;display:flex;flex-direction:column;gap:4px}
+.nav .brand{padding:0 10px 22px}
+.nav-item{display:flex;justify-content:space-between;align-items:center;font-size:15px;padding:11px 10px;border-radius:8px;border:0;background:none;color:var(--fg-2);text-align:left}
+.nav-item:hover{background:#1F1F1D;color:var(--fg)}
+.nav-item[aria-current="page"]{background:var(--row);color:var(--fg);font-weight:600}
+.count{font-size:11px;font-weight:700;color:var(--on-gold);background:var(--warn);border-radius:99px;padding:1px 7px}
+.nav-sub{font-size:13px;color:var(--muted);padding:7px 10px;background:none;border:0;text-align:left}
+.nav-sub:hover{color:var(--fg)}
+.nav-label{font-size:11px;letter-spacing:.08em;color:var(--muted);padding:22px 10px 6px}
+.nav-user{display:flex;align-items:center;gap:10px;margin-top:auto;padding:12px 10px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+.avatar{width:28px;height:28px;border-radius:99px;background:var(--line-2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--fg)}
+.main{flex:1 1 auto;min-width:0;padding-block:40px;padding-left:48px;padding-right:max(48px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:22px;max-width:1200px}
+.hero{background:var(--surface);border:2px solid var(--gold);border-radius:16px;padding:28px;display:flex;flex-wrap:wrap;gap:24px;align-items:center}
+.trade{display:flex;flex-wrap:wrap;align-items:center;gap:16px;padding:18px 22px;border-bottom:1px solid var(--row)}
+.side{font-size:12px;font-weight:700;letter-spacing:.06em;border-radius:6px;padding:5px 10px;border:1px solid}
+.side.sell{color:var(--warn)} .side.buy{color:var(--good)}
+.done-btn{border-radius:8px;padding:9px 14px;font-size:13px;border:1px solid var(--line-2);background:transparent}
+.done-btn[aria-pressed="true"]{background:var(--good);border-color:var(--good);color:var(--on-gold)}
+.confirm-btn{border-radius:8px;padding:10px 16px;font-size:14px;font-weight:600;border:1px solid var(--gold);background:var(--gold);color:var(--on-gold)}
+.confirm-btn[aria-pressed="true"]{background:var(--good);border-color:var(--good);font-weight:500}
+.empty{border:1px dashed var(--line-2);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:8px}
+.stepnum{width:28px;height:28px;border-radius:99px;border:1px solid var(--line-2);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--muted)}
+
+/* Prototype panel */
+.proto{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:10;background:#0C0C0B;border:1px solid var(--line-2);border-radius:12px;padding:8px;display:flex;gap:6px;align-items:center;font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.proto span{padding:0 6px;color:var(--muted);letter-spacing:.06em}
+.proto button{border:1px solid var(--line-2);background:var(--surface);border-radius:8px;padding:7px 10px;font-size:12px}
+
+@media (max-width:760px){
+  .app{flex-direction:column}
+  .nav{flex:none;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;padding:10px max(16px,env(safe-area-inset-left,0px));gap:4px;border-right:0;border-bottom:1px solid var(--line);align-items:center}
+  .nav .brand{padding:0 10px 0 0}
+  .nav-label,.nav-sub,.nav-user{display:none}
+  .nav-item{white-space:nowrap;gap:8px}
+  .main{padding-block:28px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .auth-pitch{padding-right:24px;border-right:0;border-bottom:1px solid var(--line)}
+  .drift{grid-template-columns:84px minmax(0,1fr) 92px;gap:10px}
+  .hero{padding:20px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+<div class="proto" role="group" aria-label="Prototype controls">
+  <span>DESIGN PROTOTYPE · SAMPLE DATA</span>
+  <button type="button" data-action="restart">Restart</button>
+  <button type="button" data-action="toggle-plan" id="toggle-plan">Show empty</button>
+</div>
+
+<script>
+(function(){
+  var LOGO = '<svg width="24" height="24" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="12" fill="none" stroke="#D6B36F" stroke-width="2"/><path d="M13 1a12 12 0 0 1 0 24z" fill="#D6B36F"/></svg>';
+  var NOW = {VWCE:42, NVDA:20, 'Bund 2034':15, Gold:13, 'Mintos P2P':10};
+  var PLANS = {
+    calm:{label:'Calm',drop:'−11%',ret:'5.8%',grade:'B',loss:'€2,195',months:'8 months',w:[['VWCE',35,30,40],['NVDA',5,3,8],['Bund 2034',40,35,45],['Gold',12,9,15],['Mintos P2P',8,6,10]]},
+    balanced:{label:'Balanced',drop:'−17%',ret:'7.9%',grade:'B',loss:'€3,392',months:'13 months',w:[['VWCE',45,40,50],['NVDA',10,7,13],['Bund 2034',25,21,29],['Gold',12,9,15],['Mintos P2P',8,6,10]]},
+    growth:{label:'Growth',drop:'−26%',ret:'9.6%',grade:'B−',loss:'€5,187',months:'19 months',w:[['VWCE',55,50,60],['NVDA',15,11,19],['Bund 2034',12,9,15],['Gold',10,7,13],['Mintos P2P',8,6,10]]}
+  };
+  var TRADES = {
+    now:{head:'2 trades',cost:'Est. cost ≈ €3 at IBKR',keep:'VWCE, Gold, Mintos P2P',list:[
+      ['n1','Sell','NVDA · 9 shares','20% → 10% of portfolio','≈ €1,924'],
+      ['n2','Buy','Bund 2034 · 2.6% coupon','15% → 25% of portfolio','≈ €1,998']]},
+    add:{head:'3 trades · mostly buying',cost:'Est. cost ≈ €4 at IBKR',keep:'Gold, Mintos P2P',list:[
+      ['a1','Buy','Bund 2034 · 2.6% coupon','15% → 25% of portfolio','≈ €3,000'],
+      ['a2','Buy','VWCE','42% → 44% of portfolio','≈ €2,069'],
+      ['a3','Sell','NVDA · 5 shares','a smaller sell than without new money','≈ €1,069']]}
+  };
+  var INCOME = [['v','VWCE distribution','Paid 25 Sep · 72 shares',21.40],['b','Bund 2034 coupon','Paid 4 Oct · 2.6% on €3,000',78.00],['m','Mintos interest','September · 214 loans',15.12]];
+
+  var S = {screen:'login', hasPlan:true, comfort:'balanced', level:'balanced', mode:'now', done:{}, ok:{}};
+
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function eur(n){return '€'+n.toFixed(2);}
+  function go(screen){S.screen=screen; render(); window.scrollTo(0,0);}
+
+  function drift(plan){
+    var scale=60;
+    return plan.w.map(function(r){
+      var name=r[0], lo=r[2], hi=r[3], now=NOW[name], off=now<lo||now>hi;
+      var st= off ? now+'% · '+(now>hi?'too much':'too little') : now+'% · on plan';
+      return '<div class="drift"><span style="font-weight:600">'+esc(name)+'</span>'+
+        '<div class="track" role="img" aria-label="'+esc(name)+': now '+now+'%, allowed '+lo+' to '+hi+'%">'+
+        '<div class="band" style="left:'+(lo/scale*100)+'%;width:'+((hi-lo)/scale*100)+'%"></div>'+
+        '<div class="mark'+(off?' off':'')+'" style="left:calc('+(now/scale*100)+'% - 2px)"></div></div>'+
+        '<span class="status num'+(off?' off':'')+'">'+st+'</span></div>';
+    }).join('');
+  }
+
+  function topbar(step){
+    var bars='';
+    for(var i=1;i<=3;i++) bars+='<span class="'+(i<=step?'on':'')+'"></span>';
+    return '<header class="topbar"><button class="brand" data-go="login">'+LOGO+'Finki</button>'+
+      (step?'<div class="progress"><span class="muted" style="font-size:12px;white-space:nowrap">Step '+step+' of 3</span><div class="bars">'+bars+'</div></div>'+
+      '<button class="btn-link" data-action="skip">Skip for now</button>':'<span class="grow"></span><span class="muted" style="font-size:13px">'+PLANS[S.comfort].label+' plan · max drop around '+PLANS[S.comfort].drop.replace('−','−')+'</span>')+
+      '</header>';
+  }
+
+  /* ---------- Screens ---------- */
+  var V = {};
+
+  V.login=function(){
+    return '<div class="auth">'+
+      '<section class="auth-pitch"><div class="brand">'+LOGO+'Finki</div>'+
+        '<div class="stack g14" style="max-width:560px"><h1 class="h-xl" style="font-size:clamp(34px,4.4vw,50px)">Trackers show what you have. Finki tells you what to change.</h1>'+
+        '<p class="lede">A target split for the holdings you already own (ETFs, stocks, bonds and P2P loans) and the exact trades to stay on it.</p></div>'+
+        '<div class="card pad stack g10" style="max-width:420px;background:var(--surface-2)"><div class="eyebrow">This week</div><div style="font-size:18px;font-weight:600">2 changes get you back on plan</div>'+
+        '<div class="row num" style="border-top:1px solid var(--line);padding-top:10px;justify-content:space-between"><span>Sell 9 NVDA</span><span class="muted">≈ €1,924</span></div>'+
+        '<div class="row num" style="justify-content:space-between"><span>Buy Bund 2034</span><span class="muted">≈ €2,000</span></div></div>'+
+        '<p class="fineprint" style="margin-top:auto">Finki is a calculator, not a financial adviser.</p></section>'+
+      '<section class="auth-form"><form class="stack g18" style="width:100%;max-width:380px" data-form="login">'+
+        '<div class="stack g6"><h2 style="font-size:30px">Welcome back</h2><p class="muted">Sign in to see what to change today.</p></div>'+
+        '<label class="field" for="email">Email<input id="email" type="email" value="you@example.com" autocomplete="email"></label>'+
+        '<label class="field" for="pw"><span class="row" style="justify-content:space-between"><span>Password</span><a href="#" data-action="noop" style="font-weight:400">Forgot?</a></span><input id="pw" type="password" value="sample-password" autocomplete="current-password"></label>'+
+        '<button class="btn btn-primary" type="submit">Sign in</button>'+
+        '<div class="or">or</div>'+
+        '<button class="btn btn-ghost" type="button" data-action="signin">Continue with Google</button>'+
+        '<p class="muted" style="text-align:center;margin-top:6px">New to Finki? <a href="#" data-action="signup" style="font-weight:600">Create a free account</a></p>'+
+      '</form></section></div>';
+  };
+
+  V.bring=function(){
+    function c(cls,badge,t,d){return '<button class="choice'+cls+'" data-go="review">'+(badge?'<span class="badge">'+badge+'</span>':'')+'<span class="t">'+t+'</span><span class="d">'+d+'</span></button>';}
+    return topbar(1)+'<main class="col stack g28"><div class="stack g10"><h1 class="h-xl">Bring what you own.</h1><p class="lede">Finki works on your real holdings: ETFs, stocks, bonds and P2P loans. We never suggest assets you didn\'t add.</p></div>'+
+      '<div class="choices">'+
+        c(' best','FASTEST','Connect your broker','IBKR, Trading 212, Degiro and more. Read-only: you sign in on your broker\'s site and we never see your password.')+
+        c('','','Upload a statement or CSV','Drop your broker\'s export. Works for P2P platforms too.')+
+        c('','','Type them in','Ticker or ISIN plus amount. Bonds, P2P loans and private stakes as well.')+
+        c('','','Try a sample portfolio','See how it works before you bring your own.')+
+      '</div><p class="fineprint">Takes about a minute. Free for up to [N] holdings.</p></main>';
+  };
+
+  V.review=function(){
+    var rows=[['VWCE','Vanguard FTSE All-World ETF','ETF','€8,380','42%'],['NVDA','NVIDIA Corporation','Stock','€3,990','20%'],['Bund 2034','German govt bond · 2.6% coupon','Bond','€2,990','15%'],['4GLD','Xetra-Gold','Gold','€2,590','13%'],['Mintos','214 loans · avg 11.2% interest','P2P loans','€2,000','10%']];
+    var cols='grid-template-columns:2.2fr 1.2fr 1fr .8fr';
+    return topbar(2)+'<main class="col stack g22"><div class="stack g10"><div style="color:var(--good);font-size:13px">Interactive Brokers connected · 5 holdings found</div><h1 class="h-xl">Here\'s what you own.</h1><p class="lede">We sorted them for you. Fix anything that looks off.</p></div>'+
+      '<div class="card tablebox"><div class="table"><div class="tr head" style="'+cols+'"><span>HOLDING</span><span>TYPE</span><span>VALUE</span><span>SHARE</span></div>'+
+      rows.map(function(r){return '<div class="tr num" style="'+cols+'"><span class="stack"><b>'+r[0]+'</b><span class="muted" style="font-size:12px">'+r[1]+'</span></span><span><span class="chip">'+r[2]+'</span></span><span>'+r[3]+'</span><span class="muted">'+r[4]+'</span></div>';}).join('')+
+      '<div class="tr num" style="'+cols+';border-bottom:0;font-weight:600"><span>Total</span><span></span><span>€19,950</span><span></span></div></div></div>'+
+      '<div class="row"><button class="btn-link" data-go="bring">+ Add another source</button><span class="grow"></span><button class="btn btn-primary" data-go="comfort">Looks right</button></div></main>';
+  };
+
+  V.comfort=function(){
+    var opts=[['calm','Calm','−10%','Steady over exciting. More bonds, smaller swings.','On €19,950: about −€2,000'],['balanced','Balanced','−20%','Some bumps for better growth. Most people pick this.','On €19,950: about −€4,000'],['growth','Growth','−30%','Big swings are fine if the long run pays.','On €19,950: about −€6,000']];
+    return topbar(3)+'<main class="col stack g28"><div class="stack g10"><h1 class="h-xl">One question.</h1><p style="font-size:19px">If your portfolio fell this much in a bad year, would you hold on?</p><p class="muted" style="font-size:14px">This sets how much swing your plan allows. You can change it any time.</p></div>'+
+      '<div class="choices" role="radiogroup" aria-label="Comfort level">'+opts.map(function(o){var on=S.comfort===o[0];return '<button class="choice'+(on?' picked':'')+'" role="radio" aria-checked="'+on+'" data-comfort="'+o[0]+'"><span class="muted" style="font-size:13px">'+o[1]+'</span><span class="big">'+o[2]+'</span><span class="d" style="color:var(--fg-2)">'+o[3]+'</span><span class="muted num" style="font-size:13px">'+o[4]+'</span></button>';}).join('')+'</div>'+
+      '<div class="row"><span class="muted" style="font-size:13px">Want full control? Volatility caps, position limits and strategies live in Advanced.</span><span class="grow"></span><button class="btn btn-primary" data-go="reveal">Show me what to change</button></div></main>';
+  };
+
+  V.reveal=function(){
+    var p=PLANS[S.comfort];
+    return topbar(0)+'<main class="col wide stack g22"><div class="stack g10"><h1 class="h-xl">2 changes get you on plan.</h1><p class="lede">Three holdings are already fine, so we leave them alone.</p></div>'+
+      '<div class="row" style="align-items:flex-start;gap:18px">'+
+        '<section class="card pad stack g14" style="flex:3 1 480px;min-width:0"><div class="row muted" style="font-size:13px;justify-content:space-between"><span>Now vs plan</span><span>shaded = allowed range</span></div>'+drift(PLANS.balanced)+'</section>'+
+        '<section class="card focus pad stack g14" style="flex:2 1 320px;min-width:0"><div class="eyebrow gold">Your trades</div>'+
+          '<div class="stack g6" style="border-bottom:1px solid var(--line);padding-bottom:12px"><div class="row num" style="justify-content:space-between;font-size:17px;font-weight:600"><span>Sell 9 NVDA</span><span>≈ €1,924</span></div><div class="muted" style="font-size:13px">20% → 10% of your portfolio</div></div>'+
+          '<div class="stack g6" style="border-bottom:1px solid var(--line);padding-bottom:12px"><div class="row num" style="justify-content:space-between;font-size:17px;font-weight:600"><span>Buy Bund 2034</span><span>≈ €2,000</span></div><div class="muted" style="font-size:13px">15% → 25% of your portfolio</div></div>'+
+          '<div class="muted" style="font-size:13px">Estimated cost at IBKR: about €3</div>'+
+          '<div class="tiles" style="grid-template-columns:repeat(2,minmax(0,1fr))"><div class="tile" style="background:var(--surface-2);border-radius:10px;padding:12px"><div class="k">Worst past drop</div><div class="v num" style="font-size:18px">−24% → −17%</div></div><div class="tile" style="background:var(--surface-2);border-radius:10px;padding:12px"><div class="k">Portfolio grade</div><div class="v" style="font-size:18px">C → B</div></div></div>'+
+        '</section></div>'+
+      '<div class="row"><button class="btn-link" data-action="why">Why this split?</button><span class="grow"></span><button class="btn btn-primary" data-action="save-plan">Save as my plan</button></div>'+
+      '<p class="fineprint">Calculated from your holdings and the comfort level you picked ('+p.label+'). Past behaviour, not a forecast. Not investment advice. The trades shown are for the Balanced example.</p></main>';
+  };
+
+  function shell(active, inner){
+    var items=[['today','Today',''],['holdings','Holdings',''],['plan','Plan',''],['rebalance','Rebalance',S.hasPlan?'2':''],['income','Income',S.hasPlan?String(pendingCount()||''):'']];
+    return '<div class="app"><nav class="nav" aria-label="Finki"><button class="brand" data-go="today">'+LOGO+'Finki</button>'+
+      items.map(function(i){return '<button class="nav-item" data-go="'+i[0]+'"'+(i[0]===active?' aria-current="page"':'')+'><span>'+i[1]+'</span>'+(i[2]?'<span class="count">'+i[2]+'</span>':'')+'</button>';}).join('')+
+      '<div class="nav-label">ADVANCED</div><button class="nav-sub" data-action="advanced">Full optimizer</button><button class="nav-sub" data-action="advanced">Risk &amp; backtests</button><button class="nav-sub" data-action="advanced">Correlations</button>'+
+      '<div class="nav-user"><span class="avatar">K</span><span>[Your name]</span><button class="btn-link" style="padding:0;margin-left:auto;font-size:12px" data-go="login">Sign out</button></div></nav>'+
+      '<main class="main">'+inner+'</main></div>';
+  }
+  function pendingCount(){return INCOME.filter(function(i){return !S.ok[i[0]];}).length;}
+
+  function emptyPage(title, line){
+    return '<h1 class="h-l">'+title+'</h1><section class="card stack g18" style="padding:36px"><h2 style="font-size:28px">Nothing here yet.</h2><p class="lede">'+line+'</p><div class="row"><button class="btn btn-primary" data-go="bring">Connect your broker</button><button class="btn-link" data-action="sample">Try a sample portfolio →</button></div></section>';
+  }
+
+  V.today=function(){
+    if(!S.hasPlan){
+      var steps=[['1','Bring your holdings','Broker, CSV or by hand. Bonds and P2P count.'],['2','Answer one question','How big a drop could you sit through?'],['3','Get your changes','The exact trades, and an alert when you drift.']];
+      return shell('today','<h1 class="h-l">Today</h1>'+
+        '<section class="card stack g22" style="padding:40px"><div class="stack g10" style="max-width:620px"><h2 style="font-size:34px">You have no plan yet.</h2><p class="lede">Add what you own and Finki shows you the few changes that get your portfolio on plan. Then it tells you when it drifts off again.</p></div>'+
+        '<div class="row"><button class="btn btn-primary" data-go="bring">Connect your broker</button><button class="btn btn-ghost" data-go="bring">Add holdings by hand</button><button class="btn-link" data-action="sample">Try a sample portfolio →</button></div></section>'+
+        '<div class="tiles" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">'+steps.map(function(s){return '<div class="empty"><span class="stepnum">'+s[0]+'</span><b style="font-size:16px">'+s[1]+'</b><span class="muted" style="font-size:14px">'+s[2]+'</span></div>';}).join('')+'</div>'+
+        '<div class="tiles" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))"><div class="card pad stack g6"><span class="eyebrow">Portfolio</span><span class="muted">Nothing added yet</span></div><div class="card pad stack g6"><span class="eyebrow">Plan</span><span class="muted">Appears after step 2</span></div><div class="card pad stack g6"><span class="eyebrow">Income</span><span class="muted">Dividends, coupons and P2P interest show up here</span></div></div>');
+    }
+    var pc=pendingCount(), pend=INCOME.reduce(function(a,i){return a+(S.ok[i[0]]?0:i[3]);},0);
+    return shell('today',
+      '<div class="row" style="align-items:flex-end;gap:16px"><div class="grow"><div class="muted" style="font-size:13px">Thursday, 22 October</div><h1 class="h-l">Today</h1></div>'+
+      '<div class="row num" style="gap:28px"><div><div class="muted" style="font-size:12px">Portfolio</div><div style="font-size:20px;font-weight:700">€19,950</div></div><div><div class="muted" style="font-size:12px">Since start</div><div style="font-size:20px;font-weight:700;color:var(--good)">+18.4%</div></div><div><div class="muted" style="font-size:12px">Income this year</div><div style="font-size:20px;font-weight:700">€412</div></div></div></div>'+
+      '<section class="hero"><div class="stack g10" style="flex:1 1 360px"><div class="eyebrow gold">What to change</div><h2 style="font-size:30px">2 holdings drifted off plan.</h2><p style="color:var(--fg-2)">NVDA grew to 20% (plan 7–13%). Bund 2034 slipped to 15% (plan 21–29%). Everything else is fine.</p></div>'+
+      '<div class="stack g10" style="flex:0 1 300px"><button class="btn btn-primary" data-go="rebalance">See the 2 trades</button><button class="btn btn-ghost" data-action="add-money">Adding money soon? Fix it without big sells</button></div></section>'+
+      '<div class="row" style="align-items:flex-start;gap:18px"><section class="card pad stack g14" style="flex:3 1 460px;min-width:0"><div class="row" style="justify-content:space-between"><b style="font-size:16px">Now vs plan</b><button class="btn-link" style="padding:0" data-go="plan">Open plan →</button></div>'+drift(PLANS.balanced)+'<div class="fineprint">Checked daily. Shaded = your allowed range.</div></section>'+
+      '<div class="stack g14" style="flex:2 1 280px;min-width:0">'+
+        '<button class="card pad stack g6" style="text-align:left" data-go="income"><span class="eyebrow">Income</span><span style="font-size:18px;font-weight:600">'+(pc?pc+' payment'+(pc>1?'s':'')+' to confirm':'All payments confirmed')+'</span><span class="muted num" style="font-size:14px">'+(pc?eur(pend)+' waiting':'Nothing waiting')+'</span></button>'+
+        '<div class="card pad stack g6"><span class="eyebrow">Portfolio grade</span><span style="font-size:18px;font-weight:600">C now · B on plan</span><span class="muted" style="font-size:14px">Biggest gap: too much in one stock.</span></div>'+
+        '<div class="card pad stack g6"><span class="eyebrow">Next review</span><span style="font-size:18px;font-weight:600">2 January 2027</span><span class="muted" style="font-size:14px">Quarterly. We\'ll email you sooner if something drifts.</span></div>'+
+      '</div></div>');
+  };
+
+  V.plan=function(){
+    if(!S.hasPlan) return shell('plan',emptyPage('Your plan','Your plan is built from what you own. Bring your holdings and answer one question.'));
+    var p=PLANS[S.level], cols='grid-template-columns:1.6fr 1fr 1fr 1.2fr';
+    return shell('plan',
+      '<div class="row" style="align-items:flex-end;gap:16px"><div class="grow"><h1 class="h-l">Your plan</h1><div class="muted" style="font-size:14px">The split Finki keeps you on. Saved 22 Oct 2026.</div></div>'+
+      '<div class="seg" role="group" aria-label="Comfort level">'+['calm','balanced','growth'].map(function(id){return '<button type="button" data-level="'+id+'" aria-pressed="'+(S.level===id)+'">'+PLANS[id].label+'</button>';}).join('')+'</div></div>'+
+      '<div class="tiles num"><div class="card pad tile"><div class="k">Worst past drop</div><div class="v">'+p.drop+'</div><div class="muted" style="font-size:13px">now −24%</div></div><div class="card pad tile"><div class="k">Yearly return, past 5 yrs</div><div class="v">'+p.ret+'</div><div class="muted" style="font-size:13px">now 9.1%</div></div><div class="card pad tile"><div class="k">Portfolio grade</div><div class="v">'+p.grade+'</div><div class="muted" style="font-size:13px">now C</div></div></div>'+
+      '<div class="row" style="align-items:flex-start;gap:18px"><section class="card tablebox" style="flex:3 1 440px;min-width:0"><div class="table" style="min-width:420px"><div class="tr head" style="'+cols+'"><span>HOLDING</span><span>NOW</span><span>PLAN</span><span>ALLOWED RANGE</span></div>'+
+      p.w.map(function(r){var n=NOW[r[0]],off=n<r[2]||n>r[3];return '<div class="tr num" style="'+cols+'"><b>'+r[0]+'</b><span style="'+(off?'color:var(--warn);font-weight:600':'color:var(--fg-2)')+'">'+n+'%</span><b>'+r[1]+'%</b><span class="muted">'+r[2]+'–'+r[3]+'%</span></div>';}).join('')+'</div></section>'+
+      '<section class="stack g14" style="flex:2 1 300px;min-width:0"><div class="card pad stack g10"><b style="font-size:16px">Why this split</b><p style="color:var(--fg-2);font-size:14px">The bond tends to rise when stocks fall, so it softens the drops.</p><p style="color:var(--fg-2);font-size:14px">NVDA is capped: one stock swings about 3× more than the whole market.</p><p style="color:var(--fg-2);font-size:14px">Gold barely moves with stocks. P2P stays small because it\'s slow to sell.</p></div>'+
+      '<div class="card pad stack g10"><b style="font-size:16px">What it would have felt like</b><p style="color:var(--fg-2);font-size:14px">On €19,950, the worst stretch since 2021 would have cost about <b style="color:var(--fg)">'+p.loss+'</b> and taken <b style="color:var(--fg)">'+p.months+'</b> to get back to even.</p></div></section></div>'+
+      '<div class="row"><button class="btn-link" data-action="advanced">Advanced: open the full 6-step optimizer</button><span class="grow"></span><button class="btn btn-primary" data-go="rebalance">Save plan &amp; see trades</button></div>'+
+      '<p class="fineprint">Calculated from your holdings and inputs over Oct 2021 – Oct 2026. Past behaviour is not a forecast. Not investment advice.</p>');
+  };
+
+  V.rebalance=function(){
+    if(!S.hasPlan) return shell('rebalance',emptyPage('Get back on plan','Trades appear once you have a plan.'));
+    var t=TRADES[S.mode];
+    return shell('rebalance',
+      '<div><h1 class="h-l">Get back on plan</h1><div class="muted" style="font-size:14px">Only holdings outside their range are traded.</div></div>'+
+      '<div class="row" style="gap:14px"><div class="seg" role="group" aria-label="How">'+[['now','Rebalance now'],['add','Add money instead']].map(function(m){return '<button type="button" data-mode="'+m[0]+'" aria-pressed="'+(S.mode===m[0])+'">'+m[1]+'</button>';}).join('')+'</div>'+
+      (S.mode==='add'?'<label class="field" for="amt" style="flex-direction:row;align-items:center;gap:8px;color:var(--muted)">Amount<input id="amt" value="€4,000" style="width:110px;padding:9px 10px"></label>':'')+
+      '<span class="grow"></span><div class="row" style="gap:6px;font-size:13px"><span class="chip" style="border:2px solid var(--gold);padding:5px 12px">IBKR</span><span class="chip" style="padding:6px 12px">Trading 212</span><span class="chip" style="padding:6px 12px">Degiro</span><span class="chip" style="padding:6px 12px">eToro</span></div></div>'+
+      '<section class="card focus" style="overflow:hidden"><div class="row" style="padding:18px 22px;border-bottom:1px solid var(--line);justify-content:space-between"><b style="font-size:18px">'+t.head+'</b><span class="muted" style="font-size:14px">'+t.cost+'</span></div>'+
+      t.list.map(function(x){var d=!!S.done[x[0]];return '<div class="trade"><span class="side '+(x[1]==='Sell'?'sell':'buy')+'">'+x[1].toUpperCase()+'</span><div class="stack" style="flex:1 1 220px"><b style="font-size:17px">'+x[2]+'</b><span class="muted" style="font-size:13px">'+x[3]+'</span></div><b class="num" style="font-size:17px">'+x[4]+'</b><button type="button" class="done-btn" data-done="'+x[0]+'" aria-pressed="'+d+'">'+(d?'Done ✓':'Mark done')+'</button></div>';}).join('')+
+      '<div style="padding:16px 22px" class="muted">Already on plan, no trade: '+t.keep+'</div></section>'+
+      '<div class="row"><span class="muted" style="font-size:13px">Place these at your broker. With a connected broker, Finki sees the trades on the next sync.</span><span class="grow"></span><button class="btn btn-primary" data-action="placed">I\'ve placed these trades</button></div>'+
+      '<p class="fineprint">Finki is a calculator, not an adviser. Prices as of today\'s close; your broker\'s may differ.</p>');
+  };
+
+  V.holdings=function(){
+    if(!S.hasPlan) return shell('holdings',emptyPage('Holdings','Connect a broker, upload a CSV or type holdings in. Bonds and P2P loans count too.'));
+    var groups=[['STOCKS & ETFS','€12,370 · 62%',[['VWCE','Vanguard FTSE All-World','72 shares','€8,380','+14.2%',1],['NVDA','NVIDIA Corporation','18.7 shares','€3,990','+61.0%',1]]],
+      ['BONDS','€2,990 · 15%',[['Bund 2034','DE000BU2Z031 · 2.6% coupon','Yield to maturity 2.7% · next coupon 15 Aug','€2,990','−0.4%',0]]],
+      ['GOLD','€2,590 · 13%',[['4GLD','Xetra-Gold','22 units','€2,590','+29.5%',1]]],
+      ['P2P LOANS','€2,000 · 10%',[['Mintos','214 loans · treated as one asset','Avg interest 11.2% · 3 late (1.4%)','€2,000','+9.8%',1]]]];
+    var cols='grid-template-columns:2.4fr 1.6fr 1fr .8fr';
+    return shell('holdings',
+      '<div class="row" style="align-items:flex-end;gap:14px"><div class="grow"><h1 class="h-l">Holdings</h1><div style="font-size:14px;color:var(--good)">Interactive Brokers · synced today 06:00</div></div><button class="btn btn-ghost" data-action="sync" id="syncbtn">Sync now</button><button class="btn btn-primary" data-go="bring">+ Add holding</button></div>'+
+      '<div class="tiles num"><div class="card pad tile"><div class="k">Total value</div><div class="v">€19,950</div></div><div class="card pad tile"><div class="k">Invested</div><div class="v">€16,850</div></div><div class="card pad tile"><div class="k">Gain</div><div class="v" style="color:var(--good)">+€3,100</div></div><div class="card pad tile"><div class="k">Expected income / yr</div><div class="v">€486</div></div></div>'+
+      groups.map(function(g){return '<section class="card tablebox"><div class="table"><div class="row" style="padding:14px 20px;border-bottom:1px solid var(--line);justify-content:space-between"><span class="eyebrow" style="font-weight:600">'+g[0]+'</span><span class="muted num" style="font-size:13px">'+g[1]+'</span></div>'+
+        g[2].map(function(r){return '<div class="tr num" style="'+cols+'"><span class="stack"><b>'+r[0]+'</b><span class="muted" style="font-size:12px">'+r[1]+'</span></span><span style="font-size:13px;color:var(--fg-2)">'+r[2]+'</span><span>'+r[3]+'</span><span style="text-align:right;color:'+(r[5]?'var(--good)':'var(--warn)')+'">'+r[4]+'</span></div>';}).join('')+'</div></section>';}).join(''));
+  };
+
+  V.income=function(){
+    if(!S.hasPlan) return shell('income',emptyPage('Income','Dividends, coupons and P2P interest land here automatically once your holdings are in.'));
+    var pend=0,conf=0;
+    var rows=INCOME.map(function(i){var ok=!!S.ok[i[0]]; if(ok) conf+=i[3]; else pend+=i[3];
+      return '<div class="trade"><div class="stack" style="flex:1 1 220px"><b style="font-size:16px">'+i[1]+'</b><span class="muted" style="font-size:13px">'+i[2]+'</span></div><b class="num">'+eur(i[3])+'</b><button type="button" class="confirm-btn" data-ok="'+i[0]+'" aria-pressed="'+ok+'">'+(ok?'Confirmed ✓':'Confirm')+'</button></div>';}).join('');
+    return shell('income',
+      '<div class="row" style="align-items:flex-end;gap:14px"><div class="grow"><h1 class="h-l">Income</h1><div class="muted" style="font-size:14px">Dividends, coupons and P2P interest. Not counted in portfolio value.</div></div><button class="btn btn-ghost" data-action="noop">+ Add entry</button></div>'+
+      '<div class="tiles num"><div class="card pad tile"><div class="k">This year</div><div class="v">€412</div></div><div class="card pad tile"><div class="k">Waiting to confirm</div><div class="v">'+eur(pend)+'</div></div><div class="card pad tile"><div class="k">Spendable cash</div><div class="v">'+eur(186.30+conf)+'</div></div></div>'+
+      '<section class="card" style="overflow:hidden"><div style="padding:16px 20px;border-bottom:1px solid var(--line);font-size:16px;font-weight:600">Arrived at your broker?</div>'+rows+
+      '<div style="padding:14px 20px" class="muted">Confirmed cash can go into your next rebalance. <button class="btn-link" style="padding:0" data-action="add-money">Use it to buy what\'s under plan</button></div></section>');
+  };
+
+  V.advanced=function(){
+    return shell('','<h1 class="h-l">Advanced tools</h1><section class="card stack g14" style="padding:32px"><p class="lede">The full 6-step optimizer, risk metrics, backtests and correlations live here for people who want every lever. They\'re not part of this prototype; the main flow is built so most people never need them.</p><div class="row"><button class="btn btn-ghost" data-go="plan">Back to your plan</button></div></section>');
+  };
+
+  var toast=null;
+  function render(){
+    var fn=V[S.screen]||V.login;
+    document.getElementById('root').innerHTML=fn();
+    document.getElementById('toggle-plan').textContent=S.hasPlan?'Show empty':'Show filled';
+    if(toast){var t=document.createElement('div');t.setAttribute('role','status');t.textContent=toast;t.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom,0px));background:var(--surface-2);border:1px solid var(--line-2);border-radius:10px;padding:10px 16px;font-size:14px;z-index:11';document.body.appendChild(t);setTimeout(function(){t.remove();},2200);toast=null;}
+    try{localStorage.setItem('finki-proto',JSON.stringify(S));}catch(e){}
+  }
+
+  document.addEventListener('click',function(e){
+    var el=e.target.closest('[data-go],[data-action],[data-comfort],[data-level],[data-mode],[data-done],[data-ok]');
+    if(!el) return;
+    if(el.tagName==='A') e.preventDefault();
+    var d=el.dataset;
+    if(d.go){go(d.go);return;}
+    if(d.comfort){S.comfort=d.comfort;render();return;}
+    if(d.level){S.level=d.level;render();return;}
+    if(d.mode){S.mode=d.mode;render();return;}
+    if(d.done){S.done[d.done]=!S.done[d.done];render();return;}
+    if(d.ok){S.ok[d.ok]=!S.ok[d.ok];render();return;}
+    switch(d.action){
+      case 'signin': S.hasPlan=true; go('today'); break;
+      case 'signup': S.hasPlan=false; S.ok={}; S.done={}; go('bring'); break;
+      case 'skip': S.hasPlan=false; go('today'); break;
+      case 'sample': go('reveal'); break;
+      case 'save-plan': S.hasPlan=true; S.level=S.comfort; toast='Plan saved. We\'ll tell you when something drifts.'; go('today'); break;
+      case 'why': S.hasPlan=true; S.level=S.comfort; go('plan'); break;
+      case 'add-money': S.mode='add'; go('rebalance'); break;
+      case 'placed': S.done={}; toast='Logged. Your next review is 2 January.'; go('today'); break;
+      case 'advanced': go('advanced'); break;
+      case 'sync': toast='Synced with Interactive Brokers just now.'; render(); break;
+      case 'restart': S={screen:'login',hasPlan:true,comfort:'balanced',level:'balanced',mode:'now',done:{},ok:{}}; render(); window.scrollTo(0,0); break;
+      case 'toggle-plan': S.hasPlan=!S.hasPlan; if(['login','bring','review','comfort','reveal'].indexOf(S.screen)>-1) S.screen='today'; render(); break;
+    }
+  });
+  document.addEventListener('submit',function(e){e.preventDefault();S.hasPlan=true;go('today');});
+
+  try{var saved=JSON.parse(localStorage.getItem('finki-proto')||'null'); if(saved&&saved.screen) S=Object.assign(S,saved);}catch(e){}
+  render();
+})();
+</script>
+</body>
+</html>
